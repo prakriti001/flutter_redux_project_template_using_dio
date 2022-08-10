@@ -47,6 +47,7 @@ dependencies:
   loading_gifs: ^0.3.0
   fluttertoast: ^8.0.8
   flutter_custom_dialog: ^1.2.0
+  dio: ^4.0.6
 
 
 dev_dependencies:

@@ -3,8 +3,8 @@ import 'package:personal_pjt/data/api/api_client.dart';
 class ApiRoutes {
 //  https://jsonplaceholder.typicode.com/todos/
   static const ApiConfig debugConfig = ApiConfig(
-    scheme: 'https',
-    host: 'api.uat.finobuddy.com',
+    scheme: 'http',
+    host: 'veyleyapi.ddns.net',
 //    port: 443,
     scope: scope,
   );

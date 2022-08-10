@@ -47,6 +47,7 @@ class SetErrorMessage {
 
   final String message;
 }
+class GetUserDetails {}
 
 //**************************** manage success message *************************//
 class SetSuccessMessage {

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:dio/dio.dart' as dio;
 import 'package:http/http.dart';
 import 'package:personal_pjt/core/utils/utils.dart';
 import 'package:personal_pjt/models/api_error.dart';
 import 'package:built_collection/built_collection.dart';
 import 'package:built_value/serializer.dart';
-import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart' as io_client;
 import 'package:personal_pjt/models/models.dart';
 
@@ -40,16 +40,17 @@ class ApiConfig {
   }
 }
 
-class ApiResponse<T> extends http.Response {
-  ApiResponse.from(http.Response response, this.responseKey, {this.fullType})
+class ApiResponse<T> extends dio.Response {
+  ApiResponse.from(dio.Response response, this.responseKey, {this.fullType})
       : super(
-          response.body,
-          response.statusCode,
+          data:response.data,
+          extra: response.extra,
           headers: response.headers,
           isRedirect: response.isRedirect,
-          persistentConnection: response.persistentConnection,
-          reasonPhrase: response.reasonPhrase,
-          request: response.request,
+          statusCode: response.statusCode,
+    redirects: response.redirects,
+    statusMessage: response.statusMessage,
+    requestOptions:response.requestOptions
         ) {
     _data = _getData();
     _error = _getError();
@@ -60,20 +61,18 @@ class ApiResponse<T> extends http.Response {
 
   final FullType? fullType;
 
-  T? get data => _data;
+  T? get resData => _data;
 
   T? _data;
 
   T? _getData() {
-    if (!isSuccess || body == null) {
+    if (!isSuccess || data == null) {
       return null;
     }
-
-    dynamic decodedBody = json.decode(body);
+    dynamic decodedBody = data;
     if (responseKey != null) {
       decodedBody = decodedBody[responseKey];
     }
-
     return serializers.deserialize(
       decodedBody,
       specifiedType: fullType ?? FullType(T),
@@ -113,36 +112,36 @@ class ApiResponse<T> extends http.Response {
   // end
 
   // error block
-  ApiError? _error;
+  dio.DioError? _error;
 
-  ApiError get error => _error!;
+  dio.DioError get error => _error!;
 
-  ApiError? _getError() {
+  dio.DioError? _getError() {
     if (isSuccess) {
       return null;
     }
-    const String errorKey = 'errors';
+    const String errorKey = 'error';
 
     try {
-      dynamic decodedBody = json.decode(body);
-      decodedBody = decodedBody[errorKey];
-
+      dio.DioError error=dio.DioError(requestOptions: requestOptions,response: data);
+      dynamic decodedBody = error.response?.data[errorKey];
       return serializers.deserialize(
         decodedBody,
-        specifiedType: const FullType(ApiError),
-      ) as ApiError;
+        specifiedType: const FullType(dio.DioError),
+      ) as dio.DioError;
+      return error.response?.data[errorKey];
     } on FormatException {
-      return ApiError((ApiErrorBuilder b) {
-        return b
-          ..status = 0
-          ..message = ListBuilder<String>(<String>['Something went wrong']);
-      });
+      // return ApiError((ApiErrorBuilder b) {
+      //   return b
+      //     ..status = 0
+      //     ..message = ListBuilder<String>(<String>['Something went wrong']);
+      // });
     }
   }
 
   // end
 
-  bool get isSuccess => statusCode >= 200 && statusCode < 300;
+  bool get isSuccess => statusCode! >= 200 && statusCode! < 300;
 
   bool get isUnAuthorizedRequest => statusCode == 401;
 }
@@ -190,7 +189,7 @@ class ApiClient extends io_client.IOClient {
   }) async {
     final Uri url = buildUrl(path: path, queryParams: queryParams);
 
-    http.Response response;
+    dio.Response response;
 
     dynamic requestBody = body;
 
@@ -212,62 +211,74 @@ class ApiClient extends io_client.IOClient {
       request.headers.addAll(headers!);
       request.fields.addAll(formDataRequest.fields);
       request.files.addAll(formDataRequest.files);
-      response = await Response.fromStream(await request.send());
+      response =  dio.Response(requestOptions: dio.RequestOptions(
+        path: url.toString()
+      ));
     } else {
       switch (method) {
         case Method.GET:
-          response = await get(
-            url,
-            headers: allHeaders,
+          response = await dio.Dio().get(
+            url.toString(),
+            queryParameters: queryParams,
+            options: dio.Options(
+              headers:allHeaders,
+            ),
           );
           break;
         case Method.POST:
-          response = await post(
-            url,
-            headers: allHeaders,
-            body: encodedBody,
-            encoding: encoding,
-          );
+          response = (await dio.Dio().post(
+            url.toString(),
+            queryParameters: queryParams,
+            options: dio.Options(
+              headers:allHeaders,
+            ),
+            data: encodedBody,
+          ));
           break;
         case Method.PUT:
-          response = await put(
-            url,
-            headers: allHeaders,
-            body: encodedBody,
-            encoding: encoding,
+          response = await dio.Dio().put(
+            url.toString(),
+            queryParameters: queryParams,
+            options: dio.Options(
+              headers:allHeaders,
+            ),
+            data: encodedBody,
           );
           break;
         case Method.PATCH:
-          response = await patch(
-            url,
-            headers: allHeaders,
-            body: encodedBody,
-            encoding: encoding,
+          response = await dio.Dio().patch(
+            url.toString(),
+            queryParameters: queryParams,
+            options: dio.Options(
+              headers:allHeaders,
+            ),
+            data: encodedBody,
           );
           break;
         case Method.DELETE:
-          response = await delete(
-            url,
-            headers: allHeaders,
+          response = await dio.Dio().delete(
+            url.toString(),
+            queryParameters: queryParams,
+            options: dio.Options(
+              headers:allHeaders,
+            ),
           );
           break;
         default:
           throw 'Method $method does not exist';
       }
     }
-
     log.d('''
 
     ____________________________________
-   URL: ${response.request!.url}
+   URL: ${response.requestOptions.path}
     Request-method: ${method.toString()}
-    HEADERS: ${response.request!.headers}
+    HEADERS: ${response.requestOptions.headers}
     REQUEST-BODY : ${requestBody?.toString()}
-    RESPONSE : ${response.body}
+    RESPONSE : ${response.data}
     STATUS-CODE : ${response.statusCode}
     ____________________________________
     ''');
-
     return ApiResponse<R>.from(response, responseKey, fullType: fullType);
   }
 }

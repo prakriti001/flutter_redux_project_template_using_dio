@@ -43,7 +43,8 @@ class LoginPage extends StatelessWidget {
                   TextButton(
                     onPressed: () {
                       print("===========qwkljdc");
-                      model.loginWithPassword('', 'wekdc', 'qkwjbec');
+                      //model.loginWithPassword('', 'wekdc', 'qkwjbec');
+                      model.getUserDetailsAction();
                     },
                     child: Text(
                       'qwjhvchkwvcdq',
