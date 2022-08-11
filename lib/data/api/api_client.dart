@@ -9,6 +9,7 @@ import 'package:built_value/serializer.dart';
 import 'package:http/io_client.dart' as io_client;
 import 'package:personal_pjt/models/models.dart';
 
+dio.Dio dioClient = dio.Dio();
 enum Method {
   GET,
   POST,
@@ -217,7 +218,7 @@ class ApiClient extends io_client.IOClient {
     } else {
       switch (method) {
         case Method.GET:
-          response = await dio.Dio().get(
+          response = await dioClient.get(
             url.toString(),
             queryParameters: queryParams,
             options: dio.Options(
@@ -226,7 +227,7 @@ class ApiClient extends io_client.IOClient {
           );
           break;
         case Method.POST:
-          response = (await dio.Dio().post(
+          response = (await dioClient.post(
             url.toString(),
             queryParameters: queryParams,
             options: dio.Options(
@@ -236,7 +237,7 @@ class ApiClient extends io_client.IOClient {
           ));
           break;
         case Method.PUT:
-          response = await dio.Dio().put(
+          response = await dioClient.put(
             url.toString(),
             queryParameters: queryParams,
             options: dio.Options(
@@ -246,7 +247,7 @@ class ApiClient extends io_client.IOClient {
           );
           break;
         case Method.PATCH:
-          response = await dio.Dio().patch(
+          response = await dioClient.patch(
             url.toString(),
             queryParameters: queryParams,
             options: dio.Options(
@@ -256,7 +257,7 @@ class ApiClient extends io_client.IOClient {
           );
           break;
         case Method.DELETE:
-          response = await dio.Dio().delete(
+          response = await dioClient.delete(
             url.toString(),
             queryParameters: queryParams,
             options: dio.Options(
@@ -269,7 +270,6 @@ class ApiClient extends io_client.IOClient {
       }
     }
     log.d('''
-
     ____________________________________
    URL: ${response.requestOptions.path}
     Request-method: ${method.toString()}

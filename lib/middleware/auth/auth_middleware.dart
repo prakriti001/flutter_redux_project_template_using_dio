@@ -7,6 +7,8 @@ import 'package:personal_pjt/data/services/auth/auth_service.dart';
 import 'package:personal_pjt/models/models.dart';
 import 'package:redux/redux.dart';
 
+import '../../views/home/home_page.dart';
+
 
 class AuthMiddleware {
   AuthMiddleware({required this.repository})
@@ -55,10 +57,17 @@ class AuthMiddleware {
       repository.setUserPrefs(appUser: user!);
       store.dispatch(SaveUser(userDetails: user));
       store.dispatch(SetLoader(false));
-    } on ApiError catch (e) {
-      store.dispatch(SetLoader(false));
-      store.state.navigator.currentState!.pop();
-      store.dispatch(ForceLogOutUser(error: e));
+    }on DioError catch (e) {
+      if (e.response?.statusCode == 401) {
+        print('force log out');
+        store.dispatch(SetLoader(false));
+        store.dispatch(ForceLogOutUser(error: true));
+      }
+      else{
+        print('error');
+        print('error:${e.response?.data['error']}');
+        print('error:${e.error}');
+      }
       return;
     } catch (e) {
       store.dispatch(SetLoader(false));
@@ -76,50 +85,39 @@ class AuthMiddleware {
       store.dispatch(new SetLoader(true));
       final Map<String, dynamic> objToApi = <String, dynamic>{
         'user': <String, String>{
-          'email': "pasupathypa@gmail.com",
-          'password': "Admin@123",
+          'email': action.mobile ?? '',
+          'password': action.password ?? '',
           'grant_type': 'email'
         }
       };
-      final Map<String, dynamic> response =
+      final Map<String, dynamic>? response =
           await authService.loginWithPassword(objToApi: objToApi);
-      final AppUser user=response['user'];
-       print(user.userId);
-      //
-      //  final AppUser user = response['customer'];
-      // // print('${user.userId}');
-      // print("==========first==============${user.toString()}");
-      // print(
-      //     "=========second===================${response['customer'].toString()}");
-      // if (user != null) {
-      //   store.dispatch(SaveUser(userDetails: user));
-      //   store.state.navigator.currentState!
-      //       .push(MaterialPageRoute(builder: (context) => HomePage()));
-      //   print(
-      //       "=============in state =========${store.state.currentUser.toString()}");
+      final AppUser? user= response != null ? response['user']:null;
+
+      if (user != null) {
+        store.dispatch(SaveUser(userDetails: user));
+        store.state.navigator.currentState!
+            .push(MaterialPageRoute(builder: (context) => HomePage()));
+      }
     }
     on DioError catch (e) {
-      store.dispatch(SetLoader(false));
-    print('error:${e.response?.data['error']}');
+      if (e.response?.statusCode == 401) {
+        print('force logout');
+        store.dispatch(SetLoader(false));
+        store.dispatch(ForceLogOutUser(error: true));
+      }
+      else{
+        print('error');
+        print('error:${e.response?.data['error']}');
+        print('error:${e.error}');
+      }
       return;
-    } catch (e) {
+    }catch (e) {
       store.dispatch(SetLoader(false));
       store.dispatch(ForceLogOutUser(error: true));
       debugPrint('============ login catch block ========== ${e}');
     }
-    store.dispatch(SetLoader(false));
-
-    // } on ApiError catch (e) {
-    //   debugPrint('============ login error block ========== ${e.toString()}');
-    //   store.dispatch(SetLoader(false));
-    //   //  globalErrorAlert(
-    //   //      store.state.navigator.currentContext, e?.errorMessage, null);
-    //   return;
-    // } catch (e) {
-    //   store.dispatch(SetLoader(false));
-    //   debugPrint('============ login catch block ========== ${e.toString()}');
-    // }
-    // next(action);
+    next(action);
   }
 
   void logOutUser(

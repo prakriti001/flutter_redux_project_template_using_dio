@@ -9,6 +9,7 @@ class InitPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return AuthConnector(
       builder: (BuildContext c, AuthViewModel model) {
+        return LoginPage();
         if (model.isInitializing) {
           return AppLoader();
         }
