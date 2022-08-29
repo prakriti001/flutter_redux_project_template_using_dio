@@ -6,7 +6,7 @@ import 'package:flutter_redux/flutter_redux.dart';
 import 'package:redux/redux.dart';
 
 part 'auth_connector.g.dart';
-typedef GetUserDetailsAction=void Function();
+typedef GetUserDetailsAction=void Function({required String path});
 typedef LoginWithPasswordAction = void Function(
     String email, String mobile, String password);
 typedef LogOutAction = void Function();
@@ -28,8 +28,8 @@ abstract class AuthViewModel
           store.dispatch(LoginWithPassword(
               email: email, mobile: mobile, password: password));
         }
-        ..getUserDetailsAction=(){
-        store.dispatch(GetUserDetails());
+        ..getUserDetailsAction=({required String path}){
+        store.dispatch(GetUserDetails(path: path));
         }
         ..logOut = () {
           store.dispatch(LogOutUser());

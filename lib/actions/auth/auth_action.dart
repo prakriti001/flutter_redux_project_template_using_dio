@@ -47,7 +47,10 @@ class SetErrorMessage {
 
   final String message;
 }
-class GetUserDetails {}
+class GetUserDetails {
+  final String path;
+  GetUserDetails({required this.path});
+}
 
 //**************************** manage success message *************************//
 class SetSuccessMessage {

@@ -1,3 +1,4 @@
+import 'package:image_picker/image_picker.dart';
 import 'package:personal_pjt/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:personal_pjt/connector/auth_connector.dart';
@@ -23,7 +24,7 @@ class _LoginPageState extends State<LoginPage> {
     _passwordController.dispose();
     super.dispose();
   }
-
+  XFile? image;
   @override
   Widget build(BuildContext context) {
     return AuthConnector(
@@ -110,8 +111,13 @@ class _LoginPageState extends State<LoginPage> {
                                                               .trim());
                                                     }
                                                       }),
-                                                  submitButton('LOGIN', () {
-                                                    authViewModel.getUserDetailsAction();
+                                                  submitButton('PICK IMAGE', () async{
+                                                     image = await ImagePicker().pickImage(source: ImageSource.gallery);
+                                                  }),
+                                                  submitButton('UPLOAD', () async{
+                                                    authViewModel.getUserDetailsAction(
+                                                      path: image!.path
+                                                    );
                                                   }),
                                                 ])))
                                   ])))

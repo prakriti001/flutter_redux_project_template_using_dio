@@ -47,12 +47,21 @@ class AuthMiddleware {
       Store<AppState> store, GetUserDetails action, NextDispatcher next) async {
     try {
       store.dispatch(SetLoader(true));
+Dio dio=Dio();
       final Map<String, String> headersToApi = <String, String>{
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer 9o0X20-Z0PZREaQs2sccaIoYbqXSdzeM8051P0RTeMQ',
+        'Authorization': 'Bearer CUWPuJqAsZlGk2QrPbirftjy7e3HK_U1JMLftppgXc0',
       };
+      final Map<String, dynamic> objToApi = <String, dynamic>{
+        'user': <String, dynamic>{
+          'designation': 'dancer',
+
+        }
+      };
+
       final AppUser? user = await authService.getUserDetails(
-          headers: headersToApi, userID: store.state.currentUser?.userId);
+          headers: headersToApi, userID: store.state.currentUser?.userId,body: objToApi,fileNames: ['image_cropper_1661424285093.jpg'],
+      filePath: [action.path]);
 
       repository.setUserPrefs(appUser: user!);
       store.dispatch(SaveUser(userDetails: user));

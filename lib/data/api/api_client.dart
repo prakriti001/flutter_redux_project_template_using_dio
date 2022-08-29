@@ -177,10 +177,12 @@ class ApiClient extends io_client.IOClient {
   Future<ApiResponse<R>> callJsonApi<R>({
     required Method method,
     required String path,
+    List<String>? fileNames,
+    List<String>? filePath,
     Map<String, dynamic>? queryParams,
     Map<String, String>? headers,
-    dynamic body,
-    MultipartRequest? formDataRequest,
+    Map<String, dynamic>? body,
+    bool formDataRequest=false,
     Encoding? encoding,
     //Request data is wrapped in this key before making any request
     String? requestKey,
@@ -192,7 +194,7 @@ class ApiClient extends io_client.IOClient {
 
     dio.Response response;
 
-    dynamic requestBody = body;
+    Map<String, dynamic>? requestBody = body;
 
     if (requestKey != null) {
       requestBody = <String, dynamic>{'$requestKey': requestBody};
@@ -205,16 +207,41 @@ class ApiClient extends io_client.IOClient {
       ..addAll(authHeaders ?? <String, String>{})
       ..addAll(headers ?? <String, String>{});
 
-    if (formDataRequest != null) {
-      final Uri uri = Uri.parse(url.toString());
-      final MultipartRequest request =
-          new MultipartRequest(formDataRequest.method, uri);
-      request.headers.addAll(headers!);
-      request.fields.addAll(formDataRequest.fields);
-      request.files.addAll(formDataRequest.files);
-      response =  dio.Response(requestOptions: dio.RequestOptions(
-        path: url.toString()
-      ));
+    if (formDataRequest) {
+      List<dio.MultipartFile> multiFiles=[];
+      if(fileNames!=null && filePath!=null){
+        for(int i=0;i<fileNames.length;i++){
+          multiFiles.add(dio.MultipartFile.fromFileSync(filePath[i], filename: fileNames[i]),);
+        }
+        requestBody!['files']= multiFiles;
+      }
+      var formData = dio.FormData.fromMap(requestBody!);
+      switch (method) {
+        case Method.POST:
+          response = await dioClient.post(url.toString(), data: formData,
+            queryParameters: queryParams,
+            options: dio.Options(
+              headers:allHeaders,
+            ),);
+          break;
+        case Method.PUT:
+          response = await dioClient.put(url.toString(), data: formData,
+            queryParameters: queryParams,
+            options: dio.Options(
+              headers:allHeaders,
+            ),);
+          break;
+        case Method.PATCH:
+          response = await dioClient.patch(url.toString(), data: formData,
+            queryParameters: queryParams,
+            options: dio.Options(
+              headers:allHeaders,
+            ),);
+          break;
+        default:
+          throw 'Method $method does not exist';
+      }
+
     } else {
       switch (method) {
         case Method.GET:
