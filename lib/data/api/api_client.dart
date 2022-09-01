@@ -211,7 +211,7 @@ class ApiClient extends io_client.IOClient {
       List<dio.MultipartFile> multiFiles=[];
       if(fileNames!=null && filePath!=null){
         for(int i=0;i<fileNames.length;i++){
-          multiFiles.add(dio.MultipartFile.fromFileSync(filePath[i], filename: fileNames[i]),);
+          multiFiles.add(dio.MultipartFile.fromString(filePath[i], filename: fileNames[i]),);
         }
         requestBody!['files']= multiFiles;
       }

@@ -18,6 +18,6 @@ class DateFormatHelper {
 
   static String formatDateWithTimeStamp({required String time}) {
     final DateTime _time = DateTime.parse(time);
-    return DateFormat('jm').format(_time.toLocal());
+    return DateFormat('jm').format(_time);
   }
 }

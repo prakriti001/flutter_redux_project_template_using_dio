@@ -11,19 +11,29 @@ class FormValidationHelper {
     }
   }
 
-  String? passwordValidation(String value) {
-    if (value.isEmpty) {
-      return 'Enter valid password.';
+  bool validateStructure(String value) {
+    String pattern =
+        r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$';
+    RegExp regExp = RegExp(pattern);
+    return regExp.hasMatch(value);
+  }
+
+  bool? passwordValidation(String value) {
+    if (value.isNotEmpty && !validateStructure(value)) {
+      return false;
     } else {
-      return null;
+      return true;
     }
   }
 
-  String? emailValidation(String value) {
-    if (!EmailValidator.validate(value)) {
-      return 'Enter valid email';
+  bool emailValidation(String value) {
+    if (value.isNotEmpty &&
+        !(RegExp(
+            r"^[a-z0-9!#$%&'*+/=?^_{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:[A-Z]{2}|com|org|net|gov|mil|biz|info|mobi|name|aero|jobs|museum)\b")
+            .hasMatch(value))) {
+      return false;
     } else {
-      return null;
+      return true;
     }
   }
 
