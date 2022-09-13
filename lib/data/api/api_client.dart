@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:dio/dio.dart' as dio;
+import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:http/http.dart';
 import 'package:personal_pjt/core/utils/utils.dart';
 import 'package:personal_pjt/models/api_error.dart';
@@ -190,6 +191,15 @@ class ApiClient extends io_client.IOClient {
     String? responseKey,
     FullType? fullType,
   }) async {
+
+    dioClient.interceptors.add(RetryInterceptor(
+      dio: dioClient,
+      logPrint: print,
+      retries: 1,
+      retryDelays: const [
+        Duration(seconds: 1),
+      ],
+    ));
     final Uri url = buildUrl(path: path, queryParams: queryParams);
 
     dio.Response response;
