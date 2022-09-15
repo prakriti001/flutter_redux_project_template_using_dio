@@ -35,3 +35,33 @@ abstract class FileAttachment
   static Serializer<FileAttachment> get serializer =>
       _$fileAttachmentSerializer;
 }
+abstract class S3BucketResponse
+    implements Built<S3BucketResponse, S3BucketResponseBuilder> {
+  factory S3BucketResponse(
+      [S3BucketResponseBuilder Function(S3BucketResponseBuilder builder)
+      updates]) = _$S3BucketResponse;
+
+  S3BucketResponse._();
+
+  String? get key;
+
+  @BuiltValueField(wireName: 'success_action_status')
+  String? get successActionStatus;
+
+  String? get policy;
+
+  @BuiltValueField(wireName: 'x-amz-credential')
+  String? get xAmzCredential;
+
+  @BuiltValueField(wireName: 'x-amz-algorithm')
+  String? get xAmzAlgorithm;
+
+  @BuiltValueField(wireName: 'x-amz-date')
+  String? get xAmzDate;
+
+  @BuiltValueField(wireName: 'x-amz-signature')
+  String? get xAmzSignature;
+
+  static Serializer<S3BucketResponse> get serializer =>
+      _$s3BucketResponseSerializer;
+}

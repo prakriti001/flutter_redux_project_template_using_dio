@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:image_picker/image_picker.dart';
 import 'package:personal_pjt/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -116,7 +118,16 @@ class _LoginPageState extends State<LoginPage> {
                                                   }),
                                                   submitButton('UPLOAD', () async{
                                                     authViewModel.getUserDetailsAction(
-                                                      path: 'staging/0d140fa3-3ed3-429d-b919-52b4340d995f/image_cropper_1662016523104.jpg',
+                                                      s3BucketKey: 'staging/a4ee6ae7-2e61-486d-bcb5-4e82c4a5305c/image_picker4090513709980994010.jpg',
+                                                    );
+                                                  }),
+                                                  submitButton('UPLOAD TO S3', () async{
+                                                    authViewModel.uploadFileAction(
+                                                        image?.path.split('/').last,
+                                                        File(image!.path),
+                                                            (String? url){
+                                                          print('urllllll : ${url}');
+                                                        }
                                                     );
                                                   }),
                                                 ])))

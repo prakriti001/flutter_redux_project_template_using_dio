@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:personal_pjt/actions/actions.dart';
 import 'package:personal_pjt/models/models.dart';
 import 'package:built_value/built_value.dart';
@@ -6,11 +8,12 @@ import 'package:flutter_redux/flutter_redux.dart';
 import 'package:redux/redux.dart';
 
 part 'auth_connector.g.dart';
-typedef GetUserDetailsAction=void Function({required String path});
+typedef GetUserDetailsAction=void Function({required String s3BucketKey});
 typedef LoginWithPasswordAction = void Function(
     String email, String mobile, String password);
 typedef LogOutAction = void Function();
-
+typedef UploadFileAction = void Function(
+    String? fileName, File? imageFile, ValueChanged<String>? attachment);
 abstract class AuthViewModel
     implements Built<AuthViewModel, AuthViewModelBuilder> {
   factory AuthViewModel(
@@ -28,9 +31,15 @@ abstract class AuthViewModel
           store.dispatch(LoginWithPassword(
               email: email, mobile: mobile, password: password));
         }
-        ..getUserDetailsAction=({required String path}){
-        store.dispatch(GetUserDetails(path: path));
+        ..getUserDetailsAction=({required String s3BucketKey}){
+        store.dispatch(GetUserDetails(s3BucketKey: s3BucketKey));
         }
+        ..uploadFileAction = (String? fileName, File? imageFile,
+            ValueChanged<String>? attachment) {
+          store.dispatch(UploadFile(
+              fileName: fileName,
+              imageFile: imageFile,
+              attachment: attachment));}
         ..logOut = () {
           store.dispatch(LogOutUser());
         };
@@ -40,7 +49,7 @@ GetUserDetailsAction get getUserDetailsAction;
   LoginWithPasswordAction get loginWithPassword;
 
   LogOutAction get logOut;
-
+  UploadFileAction get uploadFileAction;
   AppUser? get currentUser;
 
   bool get isInitializing;

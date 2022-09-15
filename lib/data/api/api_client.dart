@@ -176,8 +176,8 @@ class ApiClient extends io_client.IOClient {
   Future<ApiResponse<R>> callJsonApi<R>({
     required Method method,
     required String path,
-    List<String>? fileNames,
-    List<String>? filePath,
+    String? fieldName,
+    String? s3BucketKey,
     Map<String, dynamic>? queryParams,
     Map<String, String>? headers,
     Map<String, dynamic>? body,
@@ -216,12 +216,10 @@ class ApiClient extends io_client.IOClient {
       ..addAll(headers ?? <String, String>{});
 
     if (formDataRequest) {
-      List<dio.MultipartFile> multiFiles=[];
-      if(fileNames!=null && filePath!=null){
-        for(int i=0;i<fileNames.length;i++){
-          multiFiles.add(dio.MultipartFile.fromString(filePath[i], filename: fileNames[i]),);
-        }
-        requestBody!['display_picture_s3']= multiFiles[0];
+     dio.MultipartFile? multiFiles;
+      if(fieldName!=null && s3BucketKey!=null){
+          multiFiles=dio.MultipartFile.fromString(s3BucketKey);
+        requestBody![fieldName]= multiFiles;
       }
       var formData = dio.FormData.fromMap(requestBody!);
       switch (method) {

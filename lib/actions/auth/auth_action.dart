@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:personal_pjt/models/app_user.dart';
 
 class CheckForUserInPrefs {}
@@ -48,8 +51,8 @@ class SetErrorMessage {
   final String message;
 }
 class GetUserDetails {
-  final String path;
-  GetUserDetails({required this.path});
+  final String s3BucketKey;
+  GetUserDetails({required this.s3BucketKey});
 }
 
 //**************************** manage success message *************************//
@@ -57,4 +60,12 @@ class SetSuccessMessage {
   SetSuccessMessage({required this.message});
 
   final String message;
+}
+//******************************** upload-file ********************************//
+class UploadFile {
+  UploadFile({this.fileName, this.imageFile, this.attachment});
+
+  final String? fileName;
+  final File? imageFile;
+  final ValueChanged<String>? attachment;
 }

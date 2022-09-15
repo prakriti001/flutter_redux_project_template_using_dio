@@ -28,15 +28,33 @@ class AuthService extends ApiService {
         throw true;
       }
   }
+  //******************************** upload-file ********************************//
+  Future<Map<String, dynamic>?> uploadFile(
+      {Map<String, String>? headersToApi,
+        Map<String, dynamic>? objToApi}) async {
+    final ApiResponse<ApiSuccess> res = await client!.callJsonApi<ApiSuccess>(
+      method: Method.POST,
+      headers: headersToApi,
+      body: objToApi,
+      path: '/content_management/contents/presigned_url',
+    );
+    if (res.isSuccess) {
+      return {'url': res.resData!.url, 'url_fields': res.resData!.urlFields};
+    } else if (res.isUnAuthorizedRequest) {
+      throw true;
+    } else {
+      throw res.error;
+    }
+  }
 
   Future<AppUser?> getUserDetails(
-      {Map<String, String>? headers, int? userID,Map<String, dynamic>? body,List<String>? fileNames,
-        List<String>? filePath}) async {
+      {Map<String, String>? headers, int? userID,Map<String, dynamic>? body,String? fieldName,
+        String? s3BucketKey}) async {
       final ApiResponse<ApiSuccess> res = await client!.callJsonApi<ApiSuccess>(
           method: Method.PUT,
           formDataRequest: true,
-          fileNames: fileNames,
-          filePath: filePath,
+          fieldName: fieldName,
+          s3BucketKey: s3BucketKey,
           body: body,
           path: '/user_management/business/businesses/update_profile',
           headers: headers);
