@@ -116,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
                                                   }),
                                                   submitButton('UPLOAD', () async{
                                                     authViewModel.getUserDetailsAction(
-                                                      path: 'staging/e411daa1-5ebe-44c0-9f62-888854feabc5/image_cropper_1661424285093.jpg',
+                                                      path: 'staging/0d140fa3-3ed3-429d-b919-52b4340d995f/image_cropper_1662016523104.jpg',
                                                     );
                                                   }),
                                                 ])))

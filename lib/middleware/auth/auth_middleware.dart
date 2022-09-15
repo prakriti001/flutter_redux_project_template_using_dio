@@ -50,7 +50,7 @@ class AuthMiddleware {
 Dio dio=Dio();
       final Map<String, String> headersToApi = <String, String>{
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer CUWPuJqAsZlGk2QrPbirftjy7e3HK_U1JMLftppgXc0',
+        'Authorization': 'Bearer P1lkSkOQ-G5vuRvlJxNIzv0Sc2DIs118nqtEm_l2TSQ',
       };
       final Map<String, dynamic> objToApi = <String, dynamic>{
         'user': <String, dynamic>{

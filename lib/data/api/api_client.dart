@@ -4,8 +4,6 @@ import 'package:dio/dio.dart' as dio;
 import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:http/http.dart';
 import 'package:personal_pjt/core/utils/utils.dart';
-import 'package:personal_pjt/models/api_error.dart';
-import 'package:built_collection/built_collection.dart';
 import 'package:built_value/serializer.dart';
 import 'package:http/io_client.dart' as io_client;
 import 'package:personal_pjt/models/models.dart';
@@ -223,7 +221,7 @@ class ApiClient extends io_client.IOClient {
         for(int i=0;i<fileNames.length;i++){
           multiFiles.add(dio.MultipartFile.fromString(filePath[i], filename: fileNames[i]),);
         }
-        requestBody!['files']= multiFiles;
+        requestBody!['display_picture_s3']= multiFiles[0];
       }
       var formData = dio.FormData.fromMap(requestBody!);
       switch (method) {
