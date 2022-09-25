@@ -1,10 +1,13 @@
 import 'dart:io';
 
 import 'package:image_picker/image_picker.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:personal_pjt/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:personal_pjt/connector/auth_connector.dart';
 
+import '../../core/theme/app_styles.dart';
+import '../../global_widgets/padding_helper.dart';
 import '../../global_widgets/widget_helper.dart';
 
 class LoginPage extends StatefulWidget {
@@ -19,6 +22,8 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool isObSecureText = true;
+  String version = '1';
+  String buildNumber = '0';
 
   @override
   void dispose() {
@@ -27,8 +32,27 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
   XFile? image;
+
+  @override
+  void initState() {
+    super.initState();
+    getVersionDetails();
+  }
+
+  Future<void> getVersionDetails() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      version = packageInfo.version;
+      buildNumber = packageInfo.buildNumber;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final versionText = Padding(
+        padding: PaddingHelper.fromSymmetric(10.0, 0.0),
+        child: Text('Version $version+$buildNumber',
+            style: AppStyle.grey14RegularTextStyle),);
     return AuthConnector(
         builder: (BuildContext c, AuthViewModel authViewModel) {
           return Scaffold(
@@ -131,7 +155,8 @@ class _LoginPageState extends State<LoginPage> {
                                                     );
                                                   }),
                                                 ])))
-                                  ])))
+                                  ]))),
+                      versionText
                     ])),
                 // globalLoader(authViewModel.isLoading)
               ]));
