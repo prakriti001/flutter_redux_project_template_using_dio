@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "224343304528",
+    "project_id": "flutterdiotemplate",
+    "storage_bucket": "flutterdiotemplate.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:224343304528:android:dcb6389eb44fc2e737e455",
+        "android_client_info": {
+          "package_name": "com.example.personal_pjt"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "224343304528-ufk445rno32t0jn5977ln1job2g8dvan.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCopGeLkq7m2n7dIwCOt81wMUgIwnB12-g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "224343304528-ufk445rno32t0jn5977ln1job2g8dvan.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

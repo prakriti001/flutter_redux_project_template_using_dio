@@ -1,5 +1,6 @@
 
 import 'package:dio/dio.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:personal_pjt/actions/actions.dart';
 import 'package:personal_pjt/data/app_repository.dart';
@@ -18,7 +19,7 @@ class AuthMiddleware {
 
   final AppRepository repository;
   final AuthService authService;
-
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
   List<Middleware<AppState>> createAuthMiddleware() {
     return <Middleware<AppState>>[
       TypedMiddleware<AppState, CheckForUserInPrefs>(checkForUserInPrefs),
@@ -188,5 +189,30 @@ Dio dio=Dio();
     repository.setUserPrefs(appUser: null);
     store.dispatch(SaveUser(userDetails: null));
     next(action);
+  }
+  void _setUpFireBase() async {
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+  }
+
+  Future<String?> _getFCMToken() async {
+    String registrationToken = '';
+    try {
+      await messaging.getToken().then((String? token) {
+        debugPrint('--------->>>\n$token\n<<<<<---------');
+        registrationToken = token!;
+      });
+      return registrationToken;
+    } catch (e) {
+      debugPrint(
+          '======================= error in getting the token ===============');
+    }
   }
 }
