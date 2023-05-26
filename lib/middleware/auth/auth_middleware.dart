@@ -20,13 +20,16 @@ class AuthMiddleware {
   final AppRepository repository;
   final AuthService authService;
   FirebaseMessaging messaging = FirebaseMessaging.instance;
+
   List<Middleware<AppState>> createAuthMiddleware() {
     return <Middleware<AppState>>[
       TypedMiddleware<AppState, CheckForUserInPrefs>(checkForUserInPrefs),
       TypedMiddleware<AppState, LoginWithPassword>(loginWithPassword),
       TypedMiddleware<AppState, LogOutUser>(logOutUser),
       TypedMiddleware<AppState, GetUserDetails>(getUserDetails),
-      TypedMiddleware<AppState, UploadFile>(uploadFile)
+      TypedMiddleware<AppState, UploadFile>(uploadFile),
+      TypedMiddleware<AppState, ForceLogOutUser>(forceLogOutUser),
+      TypedMiddleware<AppState, LoginWithRefreshToken>(loginWithRefreshToken)
     ];
   }
 
@@ -44,49 +47,63 @@ class AuthMiddleware {
         store.dispatch(SaveUser(userDetails: null));
       }
     } catch (e) {
+      store.dispatch(new SetLoader(false));
       return;
     }
   }
-  void getUserDetails(
-      Store<AppState> store, GetUserDetails action, NextDispatcher next) async {
+
+  void getUserDetails(Store<AppState> store, GetUserDetails action,
+      NextDispatcher next) async {
     try {
       store.dispatch(SetLoader(true));
-Dio dio=Dio();
-      final Map<String, String> headersToApi = <String, String>{
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer Xa_EjxATSxLVABTFpgDRAOG6A62AV7VVcUZLVHqMJNQ',
-      };
+      Dio dio = Dio();
+      final AccessToken? token = await repository.getUserAccessToken();
+      final Map<String, String> headersToApi = await Utils.getHeader(token!);
+
       final Map<String, dynamic> objToApi = <String, dynamic>{
         'user': <String, dynamic>{
           'designation': 'dancer',
-
         }
       };
 
       final AppUser? user = await authService.getUserDetails(
-          headers: headersToApi, userID: store.state.currentUser?.userId,body: objToApi,fieldName: 'display_picture_s3',
-      s3BucketKey: action.s3BucketKey);
-
-      repository.setUserPrefs(appUser: user!);
-      store.dispatch(SaveUser(userDetails: user));
-      store.dispatch(SetLoader(false));
-    }on DioError catch (e) {
-      if (e.response?.statusCode == 401) {
-        print('force log out');
-        store.dispatch(SetLoader(false));
-        store.dispatch(ForceLogOutUser(error: true));
+          headers: headersToApi,
+          userID: store.state.currentUser?.userId,
+          body: objToApi,
+          fieldName: 'display_picture_s3',
+          s3BucketKey: action.s3BucketKey);
+      if(user != null) {
+        repository.setUserPrefs(appUser: user);
+        store.dispatch(SaveUser(userDetails: user));
       }
-      else{
+      if(action.callbackFunc != null) {
+        action.callbackFunc!();
+      }
+      store.dispatch(SetLoader(false));
+    } on DioError catch (e) {
+      if (e.response?.statusCode == 401) {
+        print('===========Unauthorized user-------Login with refresh token===========');
+        store.dispatch(ForceLogOutUser(error: true, callbackFunc: () {
+          store.dispatch(GetUserDetails(callbackFunc: action.callbackFunc,
+              s3BucketKey: action.s3BucketKey));
+        }));
+      }
+      else {
+        store.dispatch(SetLoader(false));
         print('error');
         print('error:${e.response?.data['error']}');
         print('error:${e.error}');
+        ToastHelper().getErrorFlushBar(
+            e.message, store.state.navigator.currentContext!);
       }
       return;
     } catch (e) {
       store.dispatch(SetLoader(false));
-      store.dispatch(ForceLogOutUser(error: true));
       debugPrint(
-          '============ get user details catch block ========== ${e.toString()}');
+          '============ get user details catch block ========== ${e
+              .toString()}');
+      ToastHelper().getErrorFlushBar(
+          e.toString(), store.state.navigator.currentContext!);
     }
     next(action);
   }
@@ -94,7 +111,6 @@ Dio dio=Dio();
   void loginWithPassword(Store<AppState> store, LoginWithPassword action,
       NextDispatcher next) async {
     try {
-      String registrationToken = '';
       store.dispatch(new SetLoader(true));
       final Map<String, dynamic> objToApi = <String, dynamic>{
         'user': <String, String>{
@@ -104,45 +120,50 @@ Dio dio=Dio();
         }
       };
       final Map<String, dynamic>? response =
-          await authService.loginWithPassword(objToApi: objToApi);
-      final AppUser? user= response != null ? response['user']:null;
+      await authService.loginWithPassword(objToApi: objToApi);
 
-      if (user != null) {
-        store.dispatch(SaveUser(userDetails: user));
-        store.state.navigator.currentState!
-            .push(MaterialPageRoute(builder: (context) => HomePage()));
+      if (response != null) {
+        final AppUser? user = response['customer'];
+        final AccessToken? token = response['token'];
+        repository.setUserPrefs(appUser: user);
+        repository.setUserAccessToken(accessToken: token);
+
+        if (user != null) {
+          store.dispatch(SaveUser(userDetails: user));
+          store.state.navigator.currentState!
+              .push(MaterialPageRoute(builder: (context) => HomePage()));
+        }
       }
+      store.dispatch(new SetLoader(false));
     }
     on DioError catch (e) {
       if (e.response?.statusCode == 401) {
         print('force logout');
-        store.dispatch(SetLoader(false));
-        store.dispatch(ForceLogOutUser(error: true));
       }
-      else{
+      else {
         print('error');
         print('error:${e.response?.data['error']}');
         print('error:${e.error}');
       }
+      store.dispatch(new SetLoader(false));
+      store.dispatch(ForceLogOutUser(error: e.message, forceLogout: true));
       return;
-    }catch (e) {
-      store.dispatch(SetLoader(false));
-      store.dispatch(ForceLogOutUser(error: true));
+    } catch (e) {
+      store.dispatch(new SetLoader(false));
+      store.dispatch(ForceLogOutUser(error: e, forceLogout: true));
       debugPrint('============ login catch block ========== ${e}');
     }
     next(action);
   }
+
   //******************************** upload-file ********************************//
-  void uploadFile(
-      Store<AppState> store, UploadFile action, NextDispatcher next) async {
+  void uploadFile(Store<AppState> store, UploadFile action,
+      NextDispatcher next) async {
     try {
       store.dispatch(SetLoader(true));
-      // final String? token = await repository.getUserAccessToken();
-      // final Map<String, String> headersToApi = await Utils.getHeader(token!);
-      final Map<String, String> headersToApi = <String, String>{
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer Xa_EjxATSxLVABTFpgDRAOG6A62AV7VVcUZLVHqMJNQ',
-      };
+      final AccessToken? token = await repository.getUserAccessToken();
+      final Map<String, String> headersToApi = await Utils.getHeader(token!);
+
       final Map<String, dynamic> objToApi = <String, dynamic>{
         "filename": action.fileName
       };
@@ -169,27 +190,151 @@ Dio dio=Dio();
             document.toString().split('<Key>').last.split('</Key>').first);
       }
       store.dispatch(SetLoader(false));
-    } on ApiError catch (e) {
-      store.dispatch(SetLoader(false));
-      ToastHelper().getErrorFlushBar(
-          e.errorMessage!, store.state.navigator.currentContext!);
+    } on DioError catch (e) {
+      if (e.response?.statusCode == 401) {
+        print('===========Unauthorized user-------Login with refresh token===========');
+        store.dispatch(ForceLogOutUser(error: true, callbackFunc: () {
+          store.dispatch(UploadFile(fileName: action.fileName,
+              imageFile: action.imageFile, attachment: action.attachment));
+        }));
+      }
+      else {
+        store.dispatch(SetLoader(false));
+        print('error');
+        print('error:${e.response?.data['error']}');
+        print('error:${e.error}');
+        ToastHelper().getErrorFlushBar(
+            e.message, store.state.navigator.currentContext!);
+      }
       return;
     } catch (e) {
       store.dispatch(SetLoader(false));
-      store.dispatch(ForceLogOutUser(error: true));
       debugPrint(
-          '============ upload file catch block ========== ${e.toString()}');
+          '============ upload file catch block ========== ${e
+              .toString()}');
+      ToastHelper().getErrorFlushBar(
+          e.toString(), store.state.navigator.currentContext!);
+    }
+
+    // on ApiError catch (e) {
+    //   store.dispatch(SetLoader(false));
+    //   ToastHelper().getErrorFlushBar(
+    //       e.errorMessage!, store.state.navigator.currentContext!);
+    //   return;
+    // } catch (e) {
+    //   store.dispatch(SetLoader(false));
+    //   store.dispatch(ForceLogOutUser(error: true));
+    //   debugPrint(
+    //       '============ upload file catch block ========== ${e.toString()}');
+    // }
+    next(action);
+  }
+
+  //******************************** login-with-refresh-token ********************************//
+  void loginWithRefreshToken(Store<AppState> store,
+      LoginWithRefreshToken action,
+      NextDispatcher next) async {
+    try {
+      store.dispatch(new SetLoader(true));
+      Dio dio = Dio();
+      final AccessToken? token = await repository.getUserAccessToken();
+
+      final Map<String, dynamic> objToApi = <String, dynamic>{
+        'user': <String, String>{
+          'grant_type': 'refresh_token',
+          'refresh_token': token?.refreshToken ?? "",
+        }
+      };
+      final Map<String, dynamic>? response =
+      await authService.loginWithPassword(objToApi: objToApi);
+
+      if (response != null) {
+        final AppUser? user = response['customer'];
+        final AccessToken? token = response['token'];
+        repository.setUserPrefs(appUser: user);
+        repository.setUserAccessToken(accessToken: token);
+
+        if (user != null) {
+          store.dispatch(SaveUser(userDetails: user));
+          store.state.navigator.currentState!
+              .push(MaterialPageRoute(builder: (context) => HomePage()));
+        }
+        if(action.callbackFunc != null) {
+          action.callbackFunc!();
+        }
+      }
+      store.dispatch(new SetLoader(false));
+    }
+    on DioError catch (e) {
+      store.dispatch(SetLoader(false));
+      store.dispatch(ForceLogOutUser(error: e.message, forceLogout: true));
+      debugPrint('============ login with refresh token error block ========== ${e}');
+      return;
+    } catch (e) {
+      store.dispatch(SetLoader(false));
+      store.dispatch(ForceLogOutUser(error: e, forceLogout: true));
+      debugPrint('============ login with refresh token catch block ========== ${e}');
     }
     next(action);
   }
 
+  //******************************** logout-user ********************************//
+  void logOutUser(Store<AppState> store, LogOutUser action,
+      NextDispatcher next) async {
+    try {
+      store.dispatch(SetLoader(true));
+      Dio dio = Dio();
 
-  void logOutUser(
-      Store<AppState> store, LogOutUser action, NextDispatcher next) async {
-    repository.setUserPrefs(appUser: null);
-    store.dispatch(SaveUser(userDetails: null));
+      final AccessToken? token = await repository.getUserAccessToken();
+      final Map<String, String> headersToApi = await Utils.getHeader(token!);
+      await authService.logOutUser(headers: headersToApi);
+
+      repository.setUserPrefs(appUser: AppUser());
+      repository.setUserAccessToken(accessToken: AccessToken());
+      store.dispatch(SaveUser(userDetails: AppUser()));
+      store.dispatch(SetLoader(false));
+    } on DioError catch (e) {
+      store.dispatch(SetLoader(false));
+      store.dispatch(ForceLogOutUser(error: e.message, forceLogout: true));
+      debugPrint('============ logout user error block ========== ${e}');
+      return;
+    } catch (e) {
+      store.dispatch(SetLoader(false));
+      store.dispatch(ForceLogOutUser(error: e, forceLogout: true));
+      debugPrint('============ logout user catch block ========== ${e}');
+    }
     next(action);
   }
+
+  //**************************** force-logout-user ****************************//
+  void forceLogOutUser(Store<AppState> store, ForceLogOutUser action,
+      NextDispatcher next) async {
+    try {
+      store.dispatch(SetLoader(true));
+
+      ///force log out the user
+      if (action.forceLogout == true) {
+        repository.setUserPrefs(appUser: AppUser());
+        repository.setUserAccessToken(accessToken: AccessToken());
+        store.dispatch(SaveUser(userDetails: AppUser()));
+        store.state.navigator.currentState!
+            .pushReplacement(
+            MaterialPageRoute(builder: (context) => HomePage()));
+      }
+
+      ///login with refresh token
+      else if (action.error == true) {
+        store.dispatch(
+            LoginWithRefreshToken(callbackFunc: action.callbackFunc));
+      } else {
+        debugPrint('------------------${action.error.toString()}');
+      }
+    } catch (e) {
+      store.dispatch(SetLoader(false));
+      debugPrint('force-logout catch block ${e.toString()}');
+    }
+  }
+
   void _setUpFireBase() async {
     NotificationSettings settings = await messaging.requestPermission(
       alert: true,

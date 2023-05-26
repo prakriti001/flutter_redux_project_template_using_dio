@@ -22,7 +22,7 @@ class AuthService extends ApiService {
           path: '/auth_management/user/auth/login',
           body: objToApi);
       if (res.isSuccess) {
-        return {'user': res.resData!.user};
+        return {'user': res.resData!.user, 'token': res.resData!.token!};
       }
       else{
         throw true;
@@ -64,5 +64,22 @@ class AuthService extends ApiService {
       else{
         throw true;
       }
+  }
+
+  //************************************ log-out *********************************//
+  Future<bool?> logOutUser(
+      {Map<String, String>? headers, String? s3BucketKey}) async {
+    final ApiResponse<ApiSuccess> res = await client!.callJsonApi<ApiSuccess>(
+        method: Method.PUT,
+        formDataRequest: true,
+        s3BucketKey: s3BucketKey,
+        path: '/user_management/user/auth/logout',
+        headers: headers);
+    if (res.isSuccess) {
+      return true;
+    }
+    else{
+      throw true;
+    }
   }
 }

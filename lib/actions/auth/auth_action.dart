@@ -25,9 +25,11 @@ class LogOutUser {}
 
 //*********************** force-log-out ***************************************//
 class ForceLogOutUser {
-  ForceLogOutUser({required this.error});
+  ForceLogOutUser({required this.error, this.forceLogout = false, this.callbackFunc});
 
   final dynamic error;
+  final bool? forceLogout;
+  final Function? callbackFunc;
 }
 
 //**************************** manage loading status *************************//
@@ -52,7 +54,8 @@ class SetErrorMessage {
 }
 class GetUserDetails {
   final String s3BucketKey;
-  GetUserDetails({required this.s3BucketKey});
+  final Function? callbackFunc;
+  GetUserDetails({required this.s3BucketKey, required this.callbackFunc});
 }
 
 //**************************** manage success message *************************//
@@ -68,4 +71,11 @@ class UploadFile {
   final String? fileName;
   final File? imageFile;
   final ValueChanged<String>? attachment;
+}
+
+//*************************** login-with-refresh-token ************************//
+class LoginWithRefreshToken {
+  final Function? callbackFunc;
+
+  LoginWithRefreshToken({this.callbackFunc});
 }
