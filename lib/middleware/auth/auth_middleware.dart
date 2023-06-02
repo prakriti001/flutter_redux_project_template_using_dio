@@ -37,16 +37,21 @@ class AuthMiddleware {
       NextDispatcher next) async {
     next(action);
     try {
+      store.dispatch(SetInitializer(false));
       final AppUser? user = await repository.getUserFromPrefs();
 
-      if (user != null) {
-        store.dispatch(SetInitializer(false));
+      if (user != null && user.userId != null) {
         store.dispatch(SaveUser(userDetails: user));
       } else {
-        store.dispatch(SetInitializer(false));
         store.dispatch(SaveUser(userDetails: null));
+        ///make one api call to check if the token has expired, if so, fetch a new token
+        ///from that api call and use it to make other api calls
+        store.dispatch(GetUserDetails(callbackFunc: (AppUser user) {
+          ///make all other API calls required during app startup here
+        }));
       }
     } catch (e) {
+      store.dispatch(SetInitializer(false));
       store.dispatch(new SetLoader(false));
       return;
     }
@@ -76,8 +81,8 @@ class AuthMiddleware {
         repository.setUserPrefs(appUser: user);
         store.dispatch(SaveUser(userDetails: user));
       }
-      if(action.callbackFunc != null) {
-        action.callbackFunc!();
+      if(user != null && action.callbackFunc != null) {
+        action.callbackFunc!(user);
       }
       store.dispatch(SetLoader(false));
     } on DioError catch (e) {
@@ -215,18 +220,6 @@ class AuthMiddleware {
       ToastHelper().getErrorFlushBar(
           e.toString(), store.state.navigator.currentContext!);
     }
-
-    // on ApiError catch (e) {
-    //   store.dispatch(SetLoader(false));
-    //   ToastHelper().getErrorFlushBar(
-    //       e.errorMessage!, store.state.navigator.currentContext!);
-    //   return;
-    // } catch (e) {
-    //   store.dispatch(SetLoader(false));
-    //   store.dispatch(ForceLogOutUser(error: true));
-    //   debugPrint(
-    //       '============ upload file catch block ========== ${e.toString()}');
-    // }
     next(action);
   }
 

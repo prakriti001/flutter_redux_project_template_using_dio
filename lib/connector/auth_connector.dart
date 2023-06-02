@@ -8,8 +8,7 @@ import 'package:flutter_redux/flutter_redux.dart';
 import 'package:redux/redux.dart';
 
 part 'auth_connector.g.dart';
-typedef GetUserDetailsAction=void Function({required String s3BucketKey,
-    required Function? callbackFunc});
+typedef GetUserDetailsAction=void Function({required String s3BucketKey});
 typedef LoginWithPasswordAction = void Function(
     String email, String mobile, String password);
 typedef LogOutAction = void Function();
@@ -32,10 +31,8 @@ abstract class AuthViewModel
           store.dispatch(LoginWithPassword(
               email: email, mobile: mobile, password: password));
         }
-        ..getUserDetailsAction=({required String s3BucketKey,
-              required Function? callbackFunc}){
-          store.dispatch(GetUserDetails(s3BucketKey: s3BucketKey,
-              callbackFunc: callbackFunc));
+        ..getUserDetailsAction=({required String s3BucketKey}){
+          store.dispatch(GetUserDetails(s3BucketKey: s3BucketKey));
         }
         ..uploadFileAction = (String? fileName, File? imageFile,
             ValueChanged<String>? attachment) {

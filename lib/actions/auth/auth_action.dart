@@ -53,9 +53,9 @@ class SetErrorMessage {
   final String message;
 }
 class GetUserDetails {
-  final String s3BucketKey;
-  final Function? callbackFunc;
-  GetUserDetails({required this.s3BucketKey, required this.callbackFunc});
+  final String? s3BucketKey;
+  final ValueChanged<AppUser>? callbackFunc;
+  GetUserDetails({this.s3BucketKey, this.callbackFunc});
 }
 
 //**************************** manage success message *************************//
